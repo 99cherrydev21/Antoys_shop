@@ -22,12 +22,14 @@
 
                 @if (in_array(Auth::user()->role?->name, ['jefe', 'inventarista']))
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
-                            Inventario
-                        </h4>
-                        <p class="mt-2 text-gray-600 dark:text-gray-300">
-                            Consultar existencias y gestionar productos.
-                        </p>
+                        <a href="{{ route('products.index') }}" >
+                            <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                Inventario
+                            </h4>
+                            <p class="mt-2 text-gray-600 dark:text-gray-300">
+                                Consultar existencias y gestionar productos.
+                            </p>
+                        </a>
                     </div>
 
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">

@@ -3,13 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
-
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
@@ -29,5 +23,16 @@ class Product extends Model
             'stock' => 'integer',
             'is_active' => 'boolean',
         ];
+    }
+
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class);
+    }
+    public function movements()
+    {
+        return $this->hasMany(InventoryMovement::class)
+            ->latest();
     }
 }

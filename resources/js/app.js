@@ -1,7 +1,11 @@
-
 import Alpine from 'alpinejs';
+import scannerList, { swipeRow } from './scanner-list';
 
 window.Alpine = Alpine;
+
+// Escáner reutilizable
+Alpine.data('scannerList', scannerList);
+Alpine.data('swipeRow', swipeRow);
 
 Alpine.data('themeSwitcher', () => ({
     dark: false,
@@ -30,5 +34,12 @@ Alpine.data('themeSwitcher', () => ({
         );
     }
 }));
-
+Alpine.data('autoDismissAlert', (delay = 3000) => ({
+    show: true,
+    init() {
+        setTimeout(() => {
+            this.show = false;
+        }, delay);
+    }
+}));
 Alpine.start();
