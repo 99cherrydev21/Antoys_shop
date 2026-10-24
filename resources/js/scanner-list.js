@@ -77,8 +77,6 @@ export function swipeRow() {
 /**
  * Escáner + lista de productos.
  * config: { lookupUrl, lookupParam, type, limitTypes, labels }
- *   limitTypes: tipos en los que la cantidad no puede pasar del stock
- *               (['salida'], o ['*'] para limitar siempre)
  */
 export default function scannerList(config = {}) {
     return {
@@ -124,11 +122,20 @@ export default function scannerList(config = {}) {
             const term = this.filter.trim().toLowerCase();
             if (!term) return this.items;
 
-            return this.items.filter(
-                (item) =>
-                    item.name.toLowerCase().includes(term) ||
-                    item.sku.toLowerCase().includes(term)
-            );
+            // Si es un número, buscamos con relleno de 7 ceros (ANT-0000001)
+            const isNumeric = /^\d+$/.test(term);
+            const paddedTerm = isNumeric ? term.padStart(7, '0') : null;
+
+            return this.items.filter((item) => {
+                const nameMatch = item.name.toLowerCase().includes(term);
+
+                let skuMatch = item.sku.toLowerCase().includes(term);
+                if (isNumeric) {
+                    skuMatch = skuMatch || item.sku.includes(paddedTerm);
+                }
+
+                return nameMatch || skuMatch;
+            });
         },
 
         get submitText() {
@@ -140,13 +147,18 @@ export default function scannerList(config = {}) {
             return `${label} · ${n} ${n === 1 ? 'unidad' : 'unidades'}`;
         },
 
-        // ---- ganchos que puedes sobrescribir con extend() ----
-        // Limpia el código leído (el lector a veces manda ' en lugar de -)
+        // ---- ganchos ----
         sanitize(raw) {
-            return String(raw || '').trim().toUpperCase().replace(/'/g, '-');
+            let code = String(raw || '').trim().toUpperCase().replace(/'/g, '-');
+
+            // Si el usuario solo escribió un número (ej. "1"), lo formateamos a "ANT-0000001"
+            if (/^\d+$/.test(code)) {
+                code = 'ANT-' + code.padStart(7, '0');
+            }
+
+            return code;
         },
 
-        // Convierte la respuesta del servidor en un item de la lista
         normalize(product) {
             return { ...product, quantity: 1, warn: '', flash: false };
         },
@@ -224,7 +236,6 @@ export default function scannerList(config = {}) {
                     const existing = this.items[index];
                     const ok = this.increase(existing);
 
-                    // Lo sube al inicio para verlo justo debajo de la zona
                     this.items.splice(index, 1);
                     this.items.unshift(existing);
 
@@ -273,13 +284,11 @@ export default function scannerList(config = {}) {
             this.clearWarn(item);
         },
 
-        // Al escribir en el input: solo limita el máximo.
-        // Al salir del campo (final = true): corrige el mínimo.
         validateQuantity(item, final = false) {
             const min = this.minQuantity;
 
             const belowMin = () => {
-                if (!final) return; // mientras escribe, no corrige todavía
+                if (!final) return;
                 item.quantity = min;
                 this.flashItem(item, `Ya no puedes disminuir: se alcanzó el mínimo (${min}).`);
             };
@@ -298,6 +307,7 @@ export default function scannerList(config = {}) {
 
             item.quantity = qty;
         },
+
         remove(id) {
             clearTimeout(this.timers[id]);
             this.items = this.items.filter((item) => item.id !== id);
@@ -327,7 +337,7 @@ export default function scannerList(config = {}) {
             }
 
             const invalid = this.items.filter((item) => {
-            const q = Number(item.quantity);
+                const q = Number(item.quantity);
                 return !Number.isInteger(q) || q < this.minQuantity;
             });
 

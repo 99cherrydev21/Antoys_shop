@@ -81,6 +81,9 @@ Route::middleware('auth')->group(function () {
     '/inventory-counts/{inventoryCount}/save-all',
     [InventoryCountController::class, 'saveAllItems']
     )->name('inventory-counts.items.save-all');
+
+    Route::get('/products/lookup', [ProductController::class, 'lookup'])->name('products.lookup');
+    
 });
 
 

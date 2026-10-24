@@ -9,7 +9,7 @@
             <!-- Opciones del sistema -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-                @if (Auth::user()->role?->name === 'jefe')
+                @if (Auth::user()->role?->name === 'Jefe')
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                         <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
                             Gestión de usuarios
@@ -20,7 +20,7 @@
                     </div>
                 @endif
 
-                @if (in_array(Auth::user()->role?->name, ['jefe', 'inventarista']))
+                @if (in_array(Auth::user()->role?->name, ['Jefe', 'inventarista']))
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                         <a href="{{ route('products.index') }}" >
                             <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
@@ -42,7 +42,7 @@
                     </div>
                 @endif
 
-                @if (in_array(Auth::user()->role?->name, ['jefe', 'vendedor']))
+                @if (in_array(Auth::user()->role?->name, ['Jefe', 'vendedor']))
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                         <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
                             Punto de venta
@@ -53,7 +53,7 @@
                     </div>
                 @endif
 
-                @if (Auth::user()->role?->name === 'jefe')
+                @if (Auth::user()->role?->name === 'Jefe')
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                         <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
                             Reportes de ventas

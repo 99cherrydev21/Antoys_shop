@@ -1,14 +1,15 @@
-@props(['placeholder' => 'SKU-0000001'])
+@props(['placeholder' => 'Ej. 1 o Nombre del producto'])
 
 <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-lg
             dark:border-gray-700 dark:bg-gray-800 sm:p-5">
 
+    <!-- Zona de escaneo con tonos azules claros y verdes -->
     <div class="relative overflow-hidden rounded-2xl border-2 border-dashed transition"
          :class="[
             items.length ? 'px-4 py-4' : 'px-5 py-8',
             scanning
-                ? 'border-indigo-500 bg-indigo-50 dark:bg-gray-900'
-                : 'border-gray-300 bg-gray-50 hover:border-indigo-400 dark:border-gray-600 dark:bg-gray-900'
+                ? 'border-teal-500 bg-teal-50 dark:bg-slate-900 dark:border-teal-500'
+                : 'border-blue-200 bg-blue-50/50 hover:border-teal-400 dark:border-gray-600 dark:bg-slate-900 dark:hover:border-teal-500'
          ]">
 
         <!-- Input invisible que cubre toda la zona -->
@@ -31,11 +32,11 @@
                   :class="[
                     items.length ? 'h-12 w-12' : 'h-16 w-16',
                     scanning
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-200'
+                        ? 'bg-gradient-to-tr from-blue-500 to-teal-500 text-white shadow-lg shadow-teal-500/30'
+                        : 'bg-blue-100 text-blue-600 dark:bg-slate-800 dark:text-blue-400'
                   ]">
                 <span x-show="scanning" x-cloak
-                      class="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-60"></span>
+                      class="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-60"></span>
                 <svg xmlns="http://www.w3.org/2000/svg"
                      class="relative"
                      :class="items.length ? 'h-6 w-6' : 'h-8 w-8'"
@@ -71,8 +72,8 @@
     <!-- Captura manual -->
     <button type="button"
             @click="manual = !manual; if (manual) $nextTick(() => $refs.manualInput.focus())"
-            class="mt-3 text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-            x-text="manual ? 'Ocultar captura manual' : 'Escribir SKU manualmente'">
+            class="mt-3 text-sm font-medium text-blue-600 hover:text-teal-600 dark:text-blue-400 dark:hover:text-teal-400 hover:underline transition-colors"
+            x-text="manual ? 'Ocultar búsqueda manual' : 'Buscar manualmente (Número o Nombre)'">
     </button>
 
     <div x-show="manual" x-cloak class="mt-3 flex gap-2">
@@ -83,14 +84,14 @@
                placeholder="{{ $placeholder }}"
                @keydown.enter.prevent="addManual()"
                class="w-full rounded-xl border border-gray-200 bg-white px-4 py-2 text-gray-800
-                      focus:outline-none focus:ring-2 focus:ring-indigo-500
-                      dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+                      focus:outline-none focus:ring-2 focus:ring-teal-500
+                      dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 transition-shadow">
         <button type="button"
                 @click="addManual()"
-                class="shrink-0 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white
-                       transition hover:bg-indigo-700
-                       focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            Agregar
+                class="shrink-0 rounded-xl bg-gradient-to-r from-blue-500 to-teal-500 px-4 py-2 text-sm font-semibold text-white
+                       transition-all duration-300 hover:from-blue-600 hover:to-teal-600 hover:shadow-lg hover:shadow-teal-500/30
+                       focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
+            Buscar
         </button>
     </div>
 </div>

@@ -38,7 +38,7 @@
                    aria-label="Volver"
                    class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl
                           border border-gray-300 bg-white text-gray-700 shadow-sm transition
-                          hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500
+                          hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500
                           dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                          viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -106,12 +106,12 @@
                             <textarea id="reason" name="reason" rows="2" maxlength="255"
                                       placeholder="Ej. Reposición de mercancía, venta o revisión de almacén..."
                                       class="w-full rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm
-                                             text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500
+                                             text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500
                                              dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">{{ old('reason') }}</textarea>
                         </div>
                     @endif
 
-                    <!-- Registrar -->
+                    <!-- Botón para Registrar (con gradiente azul-verde) -->
                     <div class="sticky bottom-4 z-20 mt-4">
                         <div x-show="submitError" x-cloak x-transition
                              class="mb-3 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium
@@ -120,10 +120,10 @@
 
                         <button type="submit"
                                 :disabled="items.length === 0 || submitting"
-                                class="w-full rounded-xl bg-indigo-600 px-5 py-3 font-semibold text-white shadow-lg
-                                       transition hover:bg-indigo-700
-                                       focus:outline-none focus:ring-2 focus:ring-indigo-400
-                                       disabled:cursor-not-allowed disabled:opacity-50">
+                                class="w-full rounded-xl bg-gradient-to-r from-blue-500 to-teal-500 px-5 py-3 font-semibold text-white shadow-lg
+                                       transition-all duration-300 hover:from-blue-600 hover:to-teal-600 hover:shadow-xl hover:shadow-teal-500/30
+                                       focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900
+                                       disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:shadow-lg">
                             <span x-text="submitText"></span>
                         </button>
                     </div>

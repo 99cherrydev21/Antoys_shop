@@ -13,7 +13,7 @@ return new class extends Migration
             $table->id();
 
             $table->string('sku', 64)->unique();
-            $table->string('name', 150);
+            $table->string('name', 150)->index();
             $table->text('description')->nullable();
 
             $table->decimal('price', 10, 2);

@@ -185,8 +185,7 @@
 
                         <button
                             type="submit"
-                            class="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg shadow-indigo-600/30 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        >
+                            class="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg shadow-indigo-600/30 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                             Guardar producto
                         </button>
                     </div>
