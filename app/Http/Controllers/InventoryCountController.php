@@ -6,13 +6,44 @@ use App\Models\InventoryCount;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class InventoryCountController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $counts = InventoryCount::with('user')->latest()->paginate(10);
-        return view('inventory-counts.index', compact('counts'));
+        $user = $request->user();
+        $isJefe = $user->isJefe();
+
+        // Solo el jefe puede ver la lista de archivados
+        $showArchived = $isJefe && $request->boolean('archivados');
+
+        $counts = InventoryCount::with('user')
+            ->withCount([
+                'items',
+                'items as counted_items_count' => fn ($q) => $q->whereNotNull('quantity_counted'),
+            ])
+            // El jefe ve todos; los demás solo los que ellos hicieron
+            ->when(! $isJefe, fn ($q) => $q->where('user_id', $user->id))
+            ->when(
+                $showArchived,
+                fn ($q) => $q->whereNotNull('archived_at'),
+                fn ($q) => $q->whereNull('archived_at')
+            )
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        $archivedTotal = $isJefe
+            ? InventoryCount::whereNotNull('archived_at')->count()
+            : 0;
+
+        return view('inventory-counts.index', compact(
+            'counts',
+            'isJefe',
+            'showArchived',
+            'archivedTotal'
+        ));
     }
 
     public function create()
@@ -63,14 +94,18 @@ class InventoryCountController extends Controller
             ->with('success', "Inventario {$count->folio} creado correctamente. Puedes iniciar el conteo.");
     }
 
-    public function show(InventoryCount $inventoryCount)
+    public function show(Request $request, InventoryCount $inventoryCount)
     {
+        $this->ensureVisible($request, $inventoryCount);
+
         $inventoryCount->load('user', 'items.product.images');
         return view('inventory-counts.show', compact('inventoryCount'));
     }
 
     public function updateItem(Request $request, InventoryCount $inventoryCount, $item)
     {
+        $this->ensureVisible($request, $inventoryCount);
+
         // Lógica para actualizar un item individual si lo usas vía AJAX
         $validated = $request->validate([
             'quantity_counted' => ['required', 'integer', 'min:0']
@@ -85,8 +120,10 @@ class InventoryCountController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function count(InventoryCount $inventoryCount)
+    public function count(Request $request, InventoryCount $inventoryCount)
     {
+        $this->ensureVisible($request, $inventoryCount);
+
         if ($inventoryCount->status !== 'en_proceso') {
             return redirect()
                 ->route('inventory-counts.show', $inventoryCount)
@@ -107,6 +144,8 @@ class InventoryCountController extends Controller
 
     public function lookup(Request $request, InventoryCount $inventoryCount)
     {
+        $this->ensureVisible($request, $inventoryCount);
+
         $sku = strtoupper(trim((string) $request->query('sku')));
 
         $item = $inventoryCount->items()
@@ -126,13 +165,14 @@ class InventoryCountController extends Controller
 
     public function storeCount(Request $request, InventoryCount $inventoryCount)
     {
+        $this->ensureVisible($request, $inventoryCount);
+
         abort_unless($inventoryCount->status === 'en_proceso', 403);
 
         $data = $request->validate([
             'items'                => ['required', 'array', 'min:1'],
             'items.*.product_id'   => ['required', 'integer', 'distinct'],
             'items.*.quantity'     => ['required', 'integer', 'min:0', 'max:2147483647'],
-            'missing_as_zero'      => ['nullable', 'boolean'],
         ]);
 
         DB::transaction(function () use ($inventoryCount, $data, $request) {
@@ -149,21 +189,243 @@ class InventoryCountController extends Controller
                         'counted_at'       => now(),
                     ]);
                 });
-
-            if ($request->boolean('missing_as_zero')) {
-                $inventoryCount->items()
-                    ->whereNull('quantity_counted')
-                    ->get()
-                    ->each(fn ($item) => $item->update([
-                        'quantity_counted' => 0,
-                        'counted_at'       => now(),
-                    ]));
-            }
         });
 
         return redirect()
             ->route('inventory-counts.show', $inventoryCount)
             ->with('success', 'Conteo guardado.');
+    }
+
+    public function updateItemAjax(Request $request, InventoryCount $inventoryCount)
+    {
+        $this->ensureVisible($request, $inventoryCount);
+
+        if ($inventoryCount->status !== 'en_proceso') {
+            return response()->json(['message' => 'El inventario ya no está en proceso.'], 403);
+        }
+
+        $validated = $request->validate([
+            'product_id'       => ['required', 'integer', 'exists:inventory_count_items,product_id'],
+            'quantity_counted' => ['required', 'integer', 'min:0'],
+        ]);
+
+        // Buscamos el item específico de este inventario físico
+        $item = $inventoryCount->items()
+            ->where('product_id', $validated['product_id'])
+            ->firstOrFail();
+
+        // Calculamos la diferencia automáticamente (Físico vs Esperado en sistema)
+        $quantityCounted = (int) $validated['quantity_counted'];
+        $difference = $quantityCounted - $item->stock_expected;
+
+        $item->update([
+            'quantity_counted' => $quantityCounted,
+            'difference'       => $difference,
+            'counted_at'       => now(),
+        ]);
+
+        return response()->json([
+            'success'    => true,
+            'difference' => $difference,
+        ]);
+    }
+
+    public function saveAllItems(Request $request, InventoryCount $inventoryCount)
+    {
+        $this->ensureVisible($request, $inventoryCount);
+
+        if ($inventoryCount->status !== 'en_proceso') {
+            return back()->withErrors([
+                'inventory' => 'Este inventario ya no está abierto para modificaciones.',
+            ]);
+        }
+
+        $validated = $request->validate([
+            'items' => ['required', 'array', 'min:1'],
+            'items.*' => ['nullable', 'integer', 'min:0', 'max:2147483647'],
+        ]);
+
+        // Solo se guardan los productos que sí se capturaron.
+        // Los que vienen vacíos se quedan sin contar (no se convierten en cero).
+        $quantities = collect($validated['items'])
+            ->filter(fn ($quantity) => $quantity !== null && $quantity !== '');
+
+        if ($quantities->isEmpty()) {
+            return back()->withErrors([
+                'items' => 'Captura la cantidad de al menos un producto.',
+            ]);
+        }
+
+        DB::transaction(function () use ($inventoryCount, $quantities, $request) {
+            $count = InventoryCount::whereKey($inventoryCount->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($count->status !== 'en_proceso') {
+                throw ValidationException::withMessages([
+                    'inventory' => 'Este inventario ya no está abierto para modificaciones.',
+                ]);
+            }
+
+            $items = $count->items()
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            foreach ($quantities as $itemId => $quantity) {
+                $item = $items->get((int) $itemId);
+
+                if (! $item) {
+                    throw ValidationException::withMessages([
+                        'items' => 'Uno de los productos no pertenece a este inventario.',
+                    ]);
+                }
+
+                $item->update([
+                    'quantity_counted' => (int) $quantity,
+                    'difference' => (int) $quantity - $item->stock_expected,
+                    'counted_by' => $request->user()->id,
+                    'counted_at' => now(),
+                ]);
+            }
+        }, 3);
+
+        return redirect()
+            ->route('inventory-counts.index', $inventoryCount);
+    }
+
+    /**
+     * Aplica las diferencias del conteo al stock real (solo jefe).
+     */
+    public function apply(Request $request, InventoryCount $inventoryCount)
+    {
+        abort_unless($request->user()->isJefe(), 403);
+
+        $adjusted = 0;
+        $skipped = 0;
+
+        DB::transaction(function () use ($inventoryCount, $request, &$adjusted, &$skipped) {
+            $count = InventoryCount::whereKey($inventoryCount->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($count->applied_at !== null) {
+                throw ValidationException::withMessages([
+                    'apply' => 'Este inventario ya fue aplicado.',
+                ]);
+            }
+
+            if ($count->archived_at !== null) {
+                throw ValidationException::withMessages([
+                    'apply' => 'Restaura el inventario antes de aplicarlo.',
+                ]);
+            }
+
+            $items = $count->items()
+                ->orderBy('product_id')
+                ->lockForUpdate()
+                ->get();
+
+            // Solo cuentan los productos que realmente se contaron.
+            // Los que no se contaron conservan su stock actual.
+            $counted = $items->filter(fn ($item) => $item->quantity_counted !== null);
+            $skipped = $items->count() - $counted->count();
+
+            if ($counted->isEmpty()) {
+                throw ValidationException::withMessages([
+                    'apply' => 'Todavía no hay productos contados en este inventario.',
+                ]);
+            }
+
+            $products = Product::whereIn('id', $counted->pluck('product_id'))
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            foreach ($counted as $item) {
+                $difference = (int) $item->quantity_counted - (int) $item->stock_expected;
+
+                if ($difference === 0 || ! $products->has($item->product_id)) {
+                    continue;
+                }
+
+                // Se suma la diferencia al stock actual para no perder
+                // ventas o movimientos hechos después de crear el conteo.
+                $product = $products[$item->product_id];
+                $product->stock = max(0, (int) $product->stock + $difference);
+                $product->save();
+                $adjusted++;
+
+                // TODO: registrar aquí un InventoryMovement de tipo "ajuste"
+                // para que quede en el historial de movimientos del producto.
+            }
+
+            $count->forceFill([
+                'status'     => 'aplicado',
+                'applied_at' => now(),
+                'applied_by' => $request->user()->id,
+                'closed_at'  => $count->closed_at ?? now(),
+            ])->save();
+        }, 3);
+
+        $message = "Inventario {$inventoryCount->folio} aplicado: se ajustó el stock de {$adjusted} producto(s).";
+
+        if ($skipped > 0) {
+            $message .= " {$skipped} sin contar conservaron su stock.";
+        }
+
+        return redirect()
+            ->route('inventory-counts.index')
+            ->with('success', $message);
+    }
+
+    /**
+     * Archiva un inventario: deja de verse para los inventaristas (solo jefe).
+     */
+    public function archive(Request $request, InventoryCount $inventoryCount)
+    {
+        abort_unless($request->user()->isJefe(), 403);
+
+        $inventoryCount->forceFill([
+            'archived_at' => now(),
+            'archived_by' => $request->user()->id,
+        ])->save();
+
+        return back()->with('success', "Inventario {$inventoryCount->folio} archivado.");
+    }
+
+    /**
+     * Saca un inventario del archivo (solo jefe).
+     */
+    public function restore(Request $request, InventoryCount $inventoryCount)
+    {
+        abort_unless($request->user()->isJefe(), 403);
+
+        $inventoryCount->forceFill([
+            'archived_at' => null,
+            'archived_by' => null,
+        ])->save();
+
+        return back()->with('success', "Inventario {$inventoryCount->folio} restaurado.");
+    }
+
+    /**
+     * El jefe accede a todo; los demás solo a sus propios conteos no archivados.
+     */
+    private function ensureVisible(Request $request, InventoryCount $inventoryCount): void
+    {
+        $user = $request->user();
+
+        if ($user->isJefe()) {
+            return;
+        }
+
+        abort_unless(
+            $inventoryCount->user_id === $user->id && $inventoryCount->archived_at === null,
+            404
+        );
     }
 
     private function scannerPayload($product, int $stock): array
@@ -180,103 +442,4 @@ class InventoryCountController extends Controller
                 : null,
         ];
     }
-    public function updateItemAjax(Request $request, InventoryCount $inventoryCount)
-{
-    if ($inventoryCount->status !== 'en_proceso') {
-        return response()->json(['message' => 'El inventario ya no está en proceso.'], 403);
-    }
-
-    $validated = $request->validate([
-        'product_id'       => ['required', 'integer', 'exists:inventory_count_items,product_id'],
-        'quantity_counted' => ['required', 'integer', 'min:0'],
-    ]);
-
-    // Buscamos el item específico de este inventario físico
-    $item = $inventoryCount->items()
-        ->where('product_id', $validated['product_id'])
-        ->firstOrFail();
-
-    // Calculamos la diferencia automáticamente (Físico vs Esperado en sistema)
-    $quantityCounted = (int) $validated['quantity_counted'];
-    $difference = $quantityCounted - $item->stock_expected;
-
-    // Actualizamos con la fecha, cantidad y diferencia calculada
-    $item->update([
-        'quantity_counted' => $quantityCounted,
-        'difference'       => $difference, // Asegúrate de tener esta columna en tu migración de inventory_count_items
-        'counted_at'       => now(),
-    ]);
-
-    return response()->json([
-        'success'    => true,
-        'difference' => $difference,
-    ]);
-}
-public function saveAllItems(Request $request, InventoryCount $inventoryCount)
-{
-    if ($inventoryCount->status !== 'en_proceso') {
-        return back()->withErrors([
-            'inventory' => 'Este inventario ya no está abierto para modificaciones.',
-        ]);
-    }
-
-    $validated = $request->validate([
-        'items' => ['required', 'array', 'min:1'],
-        'items.*' => [
-            'required',
-            'integer',
-            'min:0',
-            'max:2147483647',
-        ],
-    ]);
-
-    DB::transaction(function () use ($inventoryCount, $validated, $request) {
-        $count = InventoryCount::whereKey($inventoryCount->id)
-            ->lockForUpdate()
-            ->firstOrFail();
-
-        if ($count->status !== 'en_proceso') {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'inventory' => 'Este inventario ya no está abierto para modificaciones.',
-            ]);
-        }
-
-        $items = $count->items()
-            ->orderBy('id')
-            ->lockForUpdate()
-            ->get();
-
-        $quantities = $validated['items'];
-
-        // Verificar que se envió exactamente una cantidad por cada producto.
-        if (
-            count($quantities) !== $items->count()
-            || $items->contains(
-                fn ($item) => ! array_key_exists(
-                    (string) $item->id,
-                    $quantities
-                )
-            )
-        ) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'items' => 'Debes capturar una cantidad para cada producto.',
-            ]);
-        }
-
-        foreach ($items as $item) {
-            $quantity = (int) $quantities[$item->id];
-
-            $item->update([
-                'quantity_counted' => $quantity,
-                'difference' => $quantity - $item->stock_expected,
-                'counted_by' => $request->user()->id,
-                'counted_at' => now(),
-            ]);
-        }
-    }, 3);
-
-    return redirect()
-        ->route('inventory-counts.index', $inventoryCount);
-
-}
 }

@@ -36,5 +36,8 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
-
+public function isJefe(): bool
+{
+    return mb_strtolower((string) $this->role?->name) === 'jefe';
+}
 }

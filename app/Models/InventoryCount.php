@@ -17,13 +17,15 @@ class InventoryCount extends Model
         'closed_at',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'count_date' => 'date',
-            'closed_at' => 'datetime',
-        ];
-    }
+protected function casts(): array
+{
+    return [
+        'count_date' => 'date',
+        'closed_at' => 'datetime',
+        'applied_at' => 'datetime',
+        'archived_at' => 'datetime',
+    ];
+}
 
     public function user(): BelongsTo
     {
@@ -34,4 +36,5 @@ class InventoryCount extends Model
     {
         return $this->hasMany(InventoryCountItem::class);
     }
+
 }

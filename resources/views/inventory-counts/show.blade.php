@@ -69,7 +69,6 @@
                       id="inventory-count-form"
                       @submit="submitting = true">
                     @csrf
-                    <input type="hidden" name="missing_as_zero" value="1">
 
                     <!-- Tabla -->
                     <div class="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700 mb-6">
@@ -101,13 +100,13 @@
                                             {{ $system }}
                                         </td>
 
-                                        <!-- Físico: visual y campo oculto obligatorio para el request de Laravel -->
+                                        <!-- Físico: valor visible y campo oculto (vacío si todavía no se cuenta) -->
                                         <td class="px-4 py-4 text-center">
                                             <span class="font-bold text-gray-800 dark:text-gray-100">
                                                 {{ $isCounted ? $item->quantity_counted : '—' }}
                                             </span>
-                                            <!-- Enviamos el valor actual o 0 si está pendiente para cumplir con la validación del backend -->
-                                            <input type="hidden" name="items[{{ $item->id }}]" value="{{ $item->quantity_counted ?? 0 }}">
+                                            <!-- Si no se contó, se manda vacío y el servidor lo deja sin contar (no lo convierte en 0) -->
+                                            <input type="hidden" name="items[{{ $item->id }}]" value="{{ $item->quantity_counted }}">
                                         </td>
 
                                         <!-- Diferencia -->
@@ -130,7 +129,7 @@
                                                 </span>
                                             @elseif ($enProceso)
                                                 <span class="inline-flex items-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 px-2.5 py-1 font-medium"
-                                                      title="Se guardará con cantidad 0">
+                                                      title="Conservará su stock actual">
                                                     Sin contar
                                                 </span>
                                             @else
@@ -155,13 +154,14 @@
                     @if ($enProceso && $inventoryCount->items->isNotEmpty())
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
                             <p class="text-xs text-gray-500 dark:text-gray-400">
-                                Revisa las cantidades antes de guardar. Los faltantes se completarán automáticamente con cero.
+                                Revisa las cantidades antes de guardar. Los productos sin contar conservarán su stock actual.
                             </p>
 
                             <div>
                                 <button type="submit"
+                                        @disabled($counted === 0)
                                         @click="showToast = true; setTimeout(() => showToast = false, 3000)"
-                                        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition shadow-lg shadow-indigo-600/30">
+                                        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition shadow-lg shadow-indigo-600/30 disabled:cursor-not-allowed disabled:opacity-50">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                                     </svg>

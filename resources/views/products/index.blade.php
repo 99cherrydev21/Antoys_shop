@@ -1,5 +1,10 @@
 <x-app-layout>
 
+@php
+    // Solo el jefe puede registrar entradas/salidas, modificar y eliminar productos
+    $canManage = auth()->user()->can('manage-products');
+@endphp
+
 <!-- Contenedor principal: limita el ancho en escritorio y lo centra -->
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
@@ -12,38 +17,40 @@
         </h1>
 
         <!-- Botones de acciones -->
-        <div class="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+        <div class="grid {{ $canManage ? 'grid-cols-2' : 'grid-cols-1' }} gap-3 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
 
-            <!-- Botón: Entradas / Salidas -->
-            <a href="{{ route('inventory.operations.create') }}"
-               class="group relative inline-flex items-center justify-center gap-2.5
-                      rounded-xl sm:rounded-2xl
-                      bg-white/80 dark:bg-gray-800/80 backdrop-blur-md
-                      border border-gray-200/80 dark:border-gray-700/80
-                      px-3 py-2.5 sm:px-5 sm:py-3
-                      text-xs sm:text-sm font-semibold
-                      text-gray-700 dark:text-gray-200 shadow-md
-                      transition-all duration-300
-                      hover:bg-violet-50 dark:hover:bg-violet-950/30
-                      hover:border-violet-300 dark:hover:border-violet-700
-                      hover:text-violet-600 dark:hover:text-violet-400
-                      hover:shadow-lg hover:-translate-y-0.5
-                      focus:outline-none focus:ring-2 focus:ring-violet-500
-                      focus:ring-offset-2 dark:focus:ring-offset-gray-900">
+            <!-- Botón: Entradas / Salidas (solo jefe) -->
+            @if ($canManage)
+                <a href="{{ route('inventory.operations.create') }}"
+                   class="group relative inline-flex items-center justify-center gap-2.5
+                          rounded-xl sm:rounded-2xl
+                          bg-white/80 dark:bg-gray-800/80 backdrop-blur-md
+                          border border-gray-200/80 dark:border-gray-700/80
+                          px-3 py-2.5 sm:px-5 sm:py-3
+                          text-xs sm:text-sm font-semibold
+                          text-gray-700 dark:text-gray-200 shadow-md
+                          transition-all duration-300
+                          hover:bg-violet-50 dark:hover:bg-violet-950/30
+                          hover:border-violet-300 dark:hover:border-violet-700
+                          hover:text-violet-600 dark:hover:text-violet-400
+                          hover:shadow-lg hover:-translate-y-0.5
+                          focus:outline-none focus:ring-2 focus:ring-violet-500
+                          focus:ring-offset-2 dark:focus:ring-offset-gray-900">
 
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     class="h-4 w-4 sm:h-5 sm:w-5 shrink-0 text-purple-500 transition-transform duration-300 group-hover:scale-110"
-                     fill="none" viewBox="0 0 24 24"
-                     stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         class="h-4 w-4 sm:h-5 sm:w-5 shrink-0 text-purple-500 transition-transform duration-300 group-hover:scale-110"
+                         fill="none" viewBox="0 0 24 24"
+                         stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                    </svg>
 
-                <span class="truncate">
-                    <span class="hidden sm:inline">Entradas / Salidas</span>
-                    <span class="sm:hidden">Movs.</span>
-                </span>
-            </a>
+                    <span class="truncate">
+                        <span class="hidden sm:inline">Entradas / Salidas</span>
+                        <span class="sm:hidden">Movs.</span>
+                    </span>
+                </a>
+            @endif
 
             <!-- Botón: Inventario físico -->
             <a href="{{ route('inventory-counts.index') }}"
@@ -130,6 +137,7 @@
 
             <div
                 x-data="{
+                    canManage: @js($canManage),  // solo el jefe puede deslizar (editar / eliminar)
                     W: 96,            // ancho de cada botón (editar / eliminar)
                     startX: 0,
                     startY: 0,
@@ -139,6 +147,7 @@
                     moved: false,
 
                     start(e) {
+                        if (!this.canManage) return;
                         if (e.pointerType === 'mouse' && e.button !== 0) return;
                         this.startX = e.clientX;
                         this.startY = e.clientY;
@@ -187,53 +196,55 @@
                        lg:max-w-5xl lg:mx-auto"
             >
 
-                <!-- EDITAR (detrás, a la izquierda; se ve al deslizar a la derecha) -->
-                <a
-                    href="{{ route('products.edit', $product) }}"
-                    class="absolute inset-y-0 left-0 bg-blue-600
-                           flex flex-col items-center justify-center gap-1
-                           text-white text-xs font-semibold
-                           focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white
-                           transition-opacity"
-                    :style="{ width: W + 'px' }"
-                    :class="offset > 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'"
-                    :tabindex="offset > 0 ? 0 : -1"
-                    aria-label="Modificar {{ $product->name }}"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-6 h-6 shrink-0" viewBox="0 0 16 16">
-                        <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001"/>
-                    </svg>
-                    <span>Editar</span>
-                </a>
-
-                <!-- ELIMINAR (detrás, a la derecha; se ve al deslizar a la izquierda) -->
-                <form
-                    method="POST"
-                    action="{{ route('products.destroy', $product) }}"
-                    onsubmit="return confirm('¿Seguro que deseas eliminar este producto?');"
-                    class="absolute inset-y-0 right-0 bg-red-600 transition-opacity"
-                    :style="{ width: W + 'px' }"
-                    :class="offset < 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'"
-                >
-                    @csrf
-                    @method('DELETE')
-
-                    <button
-                        type="submit"
-                        class="w-full h-full flex flex-col items-center justify-center
-                               gap-1 text-white text-xs font-semibold
-                               focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-                        :tabindex="offset < 0 ? 0 : -1"
-                        aria-label="Eliminar {{ $product->name }}"
+                @if ($canManage)
+                    <!-- EDITAR (detrás, a la izquierda; se ve al deslizar a la derecha) -->
+                    <a
+                        href="{{ route('products.edit', $product) }}"
+                        class="absolute inset-y-0 left-0 bg-blue-600
+                               flex flex-col items-center justify-center gap-1
+                               text-white text-xs font-semibold
+                               focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white
+                               transition-opacity"
+                        :style="{ width: W + 'px' }"
+                        :class="offset > 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+                        :tabindex="offset > 0 ? 0 : -1"
+                        aria-label="Modificar {{ $product->name }}"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 shrink-0"
-                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16"/>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-6 h-6 shrink-0" viewBox="0 0 16 16">
+                            <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001"/>
                         </svg>
-                        <span>Eliminar</span>
-                    </button>
-                </form>
+                        <span>Editar</span>
+                    </a>
+
+                    <!-- ELIMINAR (detrás, a la derecha; se ve al deslizar a la izquierda) -->
+                    <form
+                        method="POST"
+                        action="{{ route('products.destroy', $product) }}"
+                        onsubmit="return confirm('¿Seguro que deseas eliminar este producto?');"
+                        class="absolute inset-y-0 right-0 bg-red-600 transition-opacity"
+                        :style="{ width: W + 'px' }"
+                        :class="offset < 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+                    >
+                        @csrf
+                        @method('DELETE')
+
+                        <button
+                            type="submit"
+                            class="w-full h-full flex flex-col items-center justify-center
+                                   gap-1 text-white text-xs font-semibold
+                                   focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                            :tabindex="offset < 0 ? 0 : -1"
+                            aria-label="Eliminar {{ $product->name }}"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 shrink-0"
+                                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16"/>
+                            </svg>
+                            <span>Eliminar</span>
+                        </button>
+                    </form>
+                @endif
 
                 <!-- Tarjeta deslizable -->
                 <article
@@ -482,6 +493,7 @@
     </template>
 </div>
 
+@if ($canManage)
 <!-- BOTÓN FLOTANTE PARA AGREGAR PRODUCTO -->
 <div class="fixed right-4 sm:right-6 z-40 lg:max-w-5xl lg:mx-auto lg:inset-x-0 pointer-events-none" style="bottom: calc(1rem + env(safe-area-inset-bottom));">
     <div class="relative flex justify-end">
@@ -505,5 +517,7 @@
         </a>
     </div>
 </div>
+
+@endif
 
 </x-app-layout>

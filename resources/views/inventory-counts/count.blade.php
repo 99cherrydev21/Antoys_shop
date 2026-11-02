@@ -53,7 +53,6 @@
             </div>
         </x-slot>
 
-        <!-- Campo oculto para que los no escaneados cuenten como cero automáticamente -->
       <!-- Campo oculto para que los no escaneados cuenten como cero automáticamente -->
 <input type="hidden" name="missing_as_zero" value="1">
 

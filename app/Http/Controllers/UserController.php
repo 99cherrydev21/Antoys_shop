@@ -224,4 +224,5 @@ private function authorizeJefe(): void
         ->route('users.index')
         ->with('success', $message);
 }
+
 }
