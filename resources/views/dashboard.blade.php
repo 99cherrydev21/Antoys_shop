@@ -11,12 +11,14 @@
 
                 @if (Auth::user()->role?->name === 'Jefe')
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                        <a href="{{ route('users.index') }}" >
                         <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
                             Gestión de usuarios
                         </h4>
                         <p class="mt-2 text-gray-600 dark:text-gray-300">
                             Administrar los usuarios y sus roles.
                         </p>
+                        </a>
                     </div>
                 @endif
 

@@ -6,6 +6,8 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\InventoryMovementController;
 use App\Http\Controllers\InventoryOperationController;
 use App\Http\Controllers\InventoryCountController;
+use App\Services\WhatsAppService;
+use App\Http\Controllers\UserController;
 
 
 Route::get('/', function () {
@@ -78,14 +80,18 @@ Route::middleware('auth')->group(function () {
     Route::post('/inventory-counts/{inventoryCount}/items/update-ajax', [InventoryCountController::class, 'updateItemAjax'])
     ->name('inventory-counts.items.update-ajax');
     Route::post(
-    '/inventory-counts/{inventoryCount}/save-all',
-    [InventoryCountController::class, 'saveAllItems']
-    )->name('inventory-counts.items.save-all');
-
+        '/inventory-counts/{inventoryCount}/save-all',
+        [InventoryCountController::class, 'saveAllItems']
+        )->name('inventory-counts.items.save-all');
     Route::get('/products/lookup', [ProductController::class, 'lookup'])->name('products.lookup');
-    
+
+    Route::resource('users', UserController::class)
+        ->except(['create', 'edit', 'show', 'destroy']);
+
+    Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])
+        ->name('users.toggle-status');
+
 });
 
-
-
 require __DIR__.'/auth.php';
+

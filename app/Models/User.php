@@ -11,10 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\Role;
 
-#[Fillable(['name',
-    'phone',
-    'password',
-    'role_id',])]
+#[Fillable(['name', 'phone', 'password', 'role_id', 'is_active'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -26,12 +23,13 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'password' => 'hashed',
-        ];
-    }
+   protected function casts(): array
+{
+    return [
+        'password' => 'hashed',
+        'is_active' => 'boolean',
+    ];
+}
 
     public function role(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
