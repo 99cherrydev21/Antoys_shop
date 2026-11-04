@@ -1,13 +1,37 @@
+@php
+    // Misma pantalla para vender y para editar: si llega $sale, estamos editando.
+    $editing = !empty($sale);
+
+    $initialItems = old('items', $editing
+        ? $sale->items
+            ->filter(fn ($item) => $item->product_id)
+            ->map(fn ($item) => [
+                'product_id' => (int) $item->product_id,
+                'quantity' => (int) $item->quantity,
+                'unit_price' => (float) $item->unit_price,
+            ])
+            ->values()
+            ->all()
+        : []);
+
+    $initialPayment = old('payment_method', $editing ? $sale->payment_method : 'efectivo');
+    $initialReceived = old('amount_received', '');
+@endphp
+
 <x-app-layout>
     <x-scanner.page
-        title="Punto de venta"
-        subtitle="Escanea o busca los productos y toca Cobrar."
-        :back="route('sales.history')"
-        :action="route('sales.store')"
+        :title="$editing ? 'Editar venta' : 'Punto de venta'"
+        :subtitle="$editing ? $sale->folio . ' · agrega, quita o cambia productos y guarda.' : 'Escanea o busca los productos y toca Cobrar.'"
+        :back="$editing ? route('sales.show', $sale) : route('sales.history')"
+        :action="$editing ? route('sales.update', $sale) : route('sales.store')"
         lookup="#"
         alpine="salePos"
         :reason="false"
         placeholder="Número, SKU o nombre">
+
+        @if ($editing)
+            @method('PUT')
+        @endif
 
         {{-- Popup para cambiar el precio (solo afecta esta venta) --}}
         <div x-show="priceOpen" x-cloak
@@ -25,7 +49,7 @@
                 <p class="mt-0.5 line-clamp-2 text-sm text-gray-600 dark:text-gray-300"
                    x-text="priceItem ? priceItem.name : ''"></p>
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Solo cambia esta venta, no el catálogo. Precio original:
+                    Solo cambia esta venta, no el catálogo. Precio de catálogo:
                     <span class="font-semibold tabular-nums" x-text="priceItem ? money(priceItem.base_price) : ''"></span>
                 </p>
 
@@ -45,7 +69,7 @@
                 <button type="button" x-show="priceItem && priceChanged(priceItem)" x-cloak
                         @click="restorePrice()"
                         class="mt-3 text-sm font-semibold text-teal-600 hover:underline dark:text-teal-400">
-                    Volver al precio original
+                    Volver al precio de catálogo
                 </button>
 
                 <div class="mt-5 grid grid-cols-3 gap-3">
@@ -64,7 +88,7 @@
             </div>
         </div>
 
-        {{-- Popup de cobro (dentro del form para que sus campos se envíen) --}}
+        {{-- Popup de cobro / guardado (dentro del form para que sus campos se envíen) --}}
         <div x-show="paymentOpen" x-cloak
              class="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
              role="dialog" aria-modal="true" aria-labelledby="payment-title"
@@ -73,11 +97,19 @@
             <div class="absolute inset-0 bg-gray-900/60" x-show="paymentOpen" x-transition.opacity
                  @click="closePayment()"></div>
 
-            <div class="relative w-full max-w-md rounded-t-3xl bg-white p-5 shadow-2xl dark:bg-gray-800 sm:rounded-2xl"
+            <div class="relative max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white p-5 shadow-2xl dark:bg-gray-800 sm:rounded-2xl"
                  x-show="paymentOpen" x-transition>
 
-                <h2 id="payment-title" class="text-sm font-medium text-gray-500 dark:text-gray-400">Total a cobrar</h2>
+                <h2 id="payment-title" class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    {{ $editing ? 'Nuevo total de la venta' : 'Total a cobrar' }}
+                </h2>
                 <p class="text-4xl font-extrabold tabular-nums text-teal-600 dark:text-teal-400" x-text="money(total)"></p>
+
+                @if ($editing)
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Al guardar, el inventario se ajusta con los productos agregados, quitados o cambiados.
+                    </p>
+                @endif
 
                 {{-- Método de pago --}}
                 <div class="mt-5 grid grid-cols-3 gap-2">
@@ -111,6 +143,12 @@
 
                 {{-- Tarjeta / transferencia: foto opcional --}}
                 <div x-show="paymentMethod !== 'efectivo'" x-cloak class="mt-4">
+                    @if ($editing && $sale->receipt_path)
+                        <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
+                            Esta venta ya tiene comprobante. Si subes otra foto, la reemplaza.
+                        </p>
+                    @endif
+
                     <input id="receipt" x-ref="receipt" type="file" name="receipt" accept="image/*"
                            :disabled="paymentMethod === 'efectivo'" @change="onReceipt($event)"
                            class="peer sr-only">
@@ -133,6 +171,19 @@
                     </div>
                 </div>
 
+                {{-- Notas: al editar se muestran para conservarlas --}}
+                @if ($editing)
+                    <div class="mt-4">
+                        <label for="sale-notes" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Notas <span class="font-normal text-gray-400">(opcional)</span>
+                        </label>
+                        <textarea id="sale-notes" name="notes" rows="2" maxlength="2000"
+                                  class="w-full rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-800
+                                         focus:outline-none focus:ring-2 focus:ring-teal-500
+                                         dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">{{ old('notes', $sale->notes) }}</textarea>
+                    </div>
+                @endif
+
                 <p x-show="paymentError" x-cloak x-text="paymentError"
                    class="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:bg-red-900 dark:text-red-200"></p>
 
@@ -146,7 +197,7 @@
                             class="col-span-2 rounded-xl bg-gradient-to-r from-blue-500 to-teal-500 px-4 py-3 font-semibold
                                    text-white shadow-lg transition-all duration-300 hover:from-blue-600 hover:to-teal-600
                                    focus:outline-none focus:ring-2 focus:ring-teal-400 disabled:cursor-not-allowed disabled:opacity-50">
-                        Confirmar venta
+                        {{ $editing ? 'Guardar cambios' : 'Confirmar venta' }}
                     </button>
                 </div>
             </div>
@@ -155,8 +206,11 @@
 
     <script>
         const POS = {
+            editing: @js($editing),
             products: @js($products),
-            items: @js(old('items', [])),
+            items: @js($initialItems),
+            payment: @js($initialPayment),
+            received: @js($initialReceived),
         };
 
         document.addEventListener('alpine:init', () => {
@@ -168,8 +222,11 @@
                 minQuantity: 1, showStock: true, stockLabel: 'Existencias', _msgTimer: null,
 
                 // Cobro
-                confirmed: false, paymentOpen: false, paymentMethod: 'efectivo',
-                amountReceived: '', paymentError: '', receiptUrl: '',
+                editing: POS.editing,
+                confirmed: false, paymentOpen: false,
+                paymentMethod: POS.payment || 'efectivo',
+                amountReceived: POS.received ?? '',
+                paymentError: '', receiptUrl: '',
                 methods: [
                     { value: 'efectivo', label: 'Efectivo' },
                     { value: 'tarjeta', label: 'Tarjeta' },
@@ -177,6 +234,7 @@
                 ],
 
                 init() {
+                    // Productos iniciales: los de la venta (al editar) o los de un intento fallido (old).
                     this.items = (Array.isArray(POS.items) ? POS.items : []).map(old => {
                         const p = this.products.find(p => Number(p.id) === Number(old.product_id));
                         if (!p) return null;
@@ -209,8 +267,9 @@
                 },
                 get change() { return Math.max(0, Math.round((Number(this.amountReceived || 0) - this.total) * 100) / 100); },
                 get submitText() {
-                    if (this.submitting) return 'Registrando venta...';
-                    return this.items.length ? 'Cobrar ' + this.money(this.total) : 'Cobrar';
+                    if (this.submitting) return this.editing ? 'Guardando cambios...' : 'Registrando venta...';
+                    const label = this.editing ? 'Guardar cambios' : 'Cobrar';
+                    return this.items.length ? label + ' · ' + this.money(this.total) : label;
                 },
                 money(v) {
                     return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(Number(v) || 0);
@@ -321,7 +380,7 @@
                     this.closePrice();
                 },
 
-                // Cobro: el botón de abajo abre el popup; "Confirmar venta" envía el form
+                // Cobro: el botón de abajo abre el popup; el botón del popup envía el form
                 validateBeforeSubmit(event) {
                     if (this.submitting) { event.preventDefault(); return; }
                     if (!this.confirmed) {
