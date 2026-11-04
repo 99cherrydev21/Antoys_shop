@@ -1,6 +1,6 @@
 <x-guest-layout>
     <div class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-        {{ __('Contraseña o teléfono incorrecto.') }}
+        {{ __('Confirma tu contraseña para continuar.') }}
     </div>
 
     <form method="POST" action="{{ route('password.confirm') }}">
