@@ -18,40 +18,28 @@
         :reason="false"
         placeholder="ANT-0000001">
 
-        <x-slot name="aside">
-            <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-lg
-                        dark:border-gray-700 dark:bg-gray-800">
-                <h2 class="mb-4 text-lg font-semibold text-gray-800 dark:text-white">Resumen</h2>
+ <x-slot name="aside">
+    <div class="flex items-center justify-between gap-3 rounded-xl border border-gray-200
+                bg-white px-4 py-2.5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
 
-                <dl class="space-y-3 text-sm">
-                    <div class="flex justify-between gap-3">
-                        <dt class="text-gray-500 dark:text-gray-400">Fecha</dt>
-                        <dd class="font-semibold text-gray-800 dark:text-white">
-                            {{ $inventoryCount->count_date->format('d/m/Y') }}
-                        </dd>
-                    </div>
-                    <div class="flex justify-between gap-3">
-                        <dt class="text-gray-500 dark:text-gray-400">Responsable</dt>
-                        <dd class="font-semibold text-gray-800 dark:text-white">
-                            {{ $inventoryCount->user->name }}
-                        </dd>
-                    </div>
-                </dl>
+        <div class="flex items-center gap-2">
+            <svg class="h-4 w-4 text-teal-500" fill="none" stroke="currentColor"
+                 viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v14H4V6a1 1 0 011-1z"/>
+            </svg>
 
-                <div class="mt-5">
-                    <div class="mb-1 flex justify-between text-sm">
-                        <span class="text-gray-500 dark:text-gray-400">Productos escaneados</span>
-                        <span class="font-semibold text-gray-800 dark:text-white">
-                            <span x-text="items.length"></span> / {{ $inventoryCount->items->count() }}
-                        </span>
-                    </div>
-                    <div class="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                        <div class="h-full rounded-full bg-indigo-600 transition-all"
-                             :style="{ width: Math.min(100, items.length / {{ $total }} * 100) + '%' }"></div>
-                    </div>
-                </div>
-            </div>
-        </x-slot>
+            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                Fecha del inventario
+            </span>
+        </div>
+
+        <span class="text-sm font-bold tabular-nums text-gray-800 dark:text-white">
+            {{ $inventoryCount->count_date->format('d/m/Y') }}
+        </span>
+
+    </div>
+</x-slot>
 
       <!-- Campo oculto para que los no escaneados cuenten como cero automáticamente -->
 <input type="hidden" name="missing_as_zero" value="1">

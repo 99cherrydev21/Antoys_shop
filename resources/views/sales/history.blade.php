@@ -453,11 +453,7 @@
 
                                 </div>
 
-                                <div class="mt-3 flex items-center justify-between border-t
-                                            border-gray-100 pt-3 dark:border-gray-700">
-
-
-                                </div>
+                               
                             </article>
                         </div>
 
@@ -512,7 +508,7 @@
 
                             </div>
 
-                           
+
                         </article>
 
                     @endif

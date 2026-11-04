@@ -46,19 +46,24 @@
                       class="space-y-6">
                     @csrf
 
-                    <!-- Fecha del inventario -->
+                   <!-- Fecha del inventario -->
                     <div>
                         <label for="count_date"
-                               class="mb-1.5 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                            class="mb-1.5 block text-sm font-semibold text-gray-700 dark:text-gray-300">
                             Fecha del inventario
                         </label>
 
+                        <!-- Input visual de solo lectura (no permite modificar y SÍ se envía en el request) -->
                         <input id="count_date"
-                               name="count_date"
-                               type="date"
-                               required
-                               value="{{ old('count_date', now()->toDateString()) }}"
-                               class="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/80 px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition shadow-sm">
+                            name="count_date"
+                            type="date"
+                            readonly
+                            value="{{ old('count_date', now()->toDateString()) }}"
+                            class="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-900/80 px-4 py-3 text-gray-700 dark:text-gray-300 opacity-75 cursor-not-allowed focus:outline-none transition shadow-sm">
+
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            La fecha se establece automáticamente con el día de hoy.
+                        </p>
                     </div>
 
                     <!-- Descripción -->
@@ -77,17 +82,7 @@
                     </div>
 
                     <!-- Aviso informativo -->
-                    <div class="rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 p-4 text-sm text-amber-800 dark:text-amber-300 shadow-sm">
-                        <div class="flex gap-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0 text-amber-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <div>
-                                <span class="font-semibold block mb-0.5">Nota importante:</span>
-                                Al crear la sesión se guardará el stock esperado de los productos activos. Las existencias no se modificarán hasta confirmar los resultados del conteo.
-                            </div>
-                        </div>
-                    </div>
+
 
                     <!-- Botón de acción principal con gradiente Esmeralda/Teal -->
                     <div class="pt-2">
