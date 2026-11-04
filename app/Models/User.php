@@ -40,4 +40,8 @@ public function isJefe(): bool
 {
     return mb_strtolower((string) $this->role?->name) === 'jefe';
 }
+public function isInventarista(): bool
+{
+    return mb_strtolower((string) $this->role?->name) === 'inventarista';
+}
 }

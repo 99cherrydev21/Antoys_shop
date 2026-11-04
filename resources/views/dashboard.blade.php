@@ -46,12 +46,14 @@
 
                 @if (in_array(Auth::user()->role?->name, ['Jefe', 'vendedor']))
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                        <a href="{{ route('sales.history') }}" >
                         <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
                             Punto de venta
                         </h4>
                         <p class="mt-2 text-gray-600 dark:text-gray-300">
                             Registrar ventas y consultar sus detalles.
                         </p>
+                    </a>
                     </div>
                 @endif
 

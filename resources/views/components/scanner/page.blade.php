@@ -10,7 +10,7 @@
     'alpine'     => 'scannerList',   // nombre del componente Alpine (para extenderlo)
     'field'      => 'items',         // nombre del arreglo que se envía en el formulario
     'reason'     => true,            // mostrar descripción opcional
-    'placeholder' => 'SKU-0000001',
+    'placeholder' => 'ANT-0000001',
 ])
 
 @php
@@ -74,7 +74,8 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ $action }}" @submit="validateBeforeSubmit($event)">
+        {{-- enctype: necesario para subir la foto del comprobante en ventas --}}
+        <form method="POST" action="{{ $action }}" enctype="multipart/form-data" @submit="validateBeforeSubmit($event)">
             @csrf
 
             <div class="grid grid-cols-1 gap-6 {{ $hasAside ? 'lg:grid-cols-3' : '' }}">
@@ -87,17 +88,18 @@
 
                 <section class="{{ $hasAside ? 'lg:col-span-2' : '' }}">
 
+                    {{-- El input invisible de la zona es fixed z-30: todo lo que se toca va en z-40 o más --}}
                     <x-scanner.zone :placeholder="$placeholder" />
 
                     <x-scanner.list :field="$field">
                         @isset($card){{ $card }}@endisset
                     </x-scanner.list>
 
-                    {{-- Contenido extra de cada vista (cliente, notas, etc.) --}}
+                    {{-- Contenido extra de cada vista (tipo de movimiento, popups de venta, etc.) --}}
                     {{ $slot }}
 
                     @if ($reason)
-                        <div class="mt-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-lg
+                        <div class="relative z-40 mt-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-lg
                                     dark:border-gray-700 dark:bg-gray-800">
                             <label for="reason"
                                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -111,8 +113,8 @@
                         </div>
                     @endif
 
-                    <!-- Botón para Registrar (con gradiente azul-verde) -->
-                    <div class="sticky bottom-4 z-20 mt-4">
+                    <!-- Botón principal (en ventas abre el popup de cobro) -->
+                    <div class="sticky bottom-4 z-40 mt-4">
                         <div x-show="submitError" x-cloak x-transition
                              class="mb-3 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium
                                     text-red-700 shadow dark:border-red-700 dark:bg-red-900 dark:text-red-200"

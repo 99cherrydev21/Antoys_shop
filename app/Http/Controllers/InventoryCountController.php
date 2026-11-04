@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\InventoryCount;
+use App\Models\InventoryMovement;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -354,12 +355,29 @@ class InventoryCountController extends Controller
                 // Se suma la diferencia al stock actual para no perder
                 // ventas o movimientos hechos después de crear el conteo.
                 $product = $products[$item->product_id];
-                $product->stock = max(0, (int) $product->stock + $difference);
+                $before = (int) $product->stock;
+                $after = max(0, $before + $difference);
+
+                if ($after === $before) {
+                    continue;
+                }
+
+                $product->stock = $after;
                 $product->save();
                 $adjusted++;
 
-                // TODO: registrar aquí un InventoryMovement de tipo "ajuste"
-                // para que quede en el historial de movimientos del producto.
+                // Deja el ajuste registrado en el historial de movimientos
+                (new InventoryMovement())->forceFill([
+                    'product_id'     => $product->id,
+                    'user_id'        => $request->user()->id,
+                    'type'           => 'ajuste',
+                    'quantity'       => abs($after - $before),
+                    'stock_before'   => $before,
+                    'stock_after'    => $after,
+                    'reason'         => "Ajuste por inventario físico {$count->folio}",
+                    'reference_type' => 'inventory_count',
+                    'reference_id'   => $count->id,
+                ])->save();
             }
 
             $count->forceFill([

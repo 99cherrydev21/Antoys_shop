@@ -25,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('manage-products', fn (User $user) => $user->isJefe());
         Gate::define('manage-products', fn (User $user) => $user->isJefe());
         Gate::define('manage-users', fn (User $user) => $user->isJefe());
+        Gate::define('view-reports', fn (User $user) => $user->isJefe() || $user->isInventarista());
     }
 
 }

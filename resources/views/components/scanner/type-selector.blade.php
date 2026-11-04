@@ -1,4 +1,4 @@
-<div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+<div class="relative z-40 rounded-2xl border border-gray-200 bg-white p-5 shadow-lg dark:border-gray-700 dark:bg-gray-800">
     <h2 class="mb-4 text-lg font-semibold text-gray-800 dark:text-white">Tipo de movimiento</h2>
 
     <div class="grid grid-cols-2 gap-3">
