@@ -4,9 +4,6 @@
             Información del perfil
         </h2>
 
-        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Actualiza tu nombre y número de teléfono.
-        </p>
     </header>
 
     <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
@@ -22,8 +19,8 @@
                 type="text"
                 class="mt-1 block w-full"
                 :value="old('name', $user->name)"
-                required
-                autofocus
+                readonly
+                disabled
                 autocomplete="name"
             />
 
@@ -39,7 +36,8 @@
                 type="tel"
                 class="mt-1 block w-full"
                 :value="old('phone', $user->phone)"
-                required
+                disabled
+                reandoly
                 autocomplete="tel"
             />
 
@@ -47,7 +45,7 @@
         </div>
 
         <div class="flex items-center gap-4">
-            <x-primary-button>Guardar</x-primary-button>
+
 
             @if (session('status') === 'profile-updated')
                 <p
