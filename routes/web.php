@@ -8,6 +8,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -204,6 +205,43 @@ Route::middleware('auth')->group(function () {
         Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])
             ->name('users.toggle-status');
     });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Solo jefe: reportes
+    |--------------------------------------------------------------------------
+    */
+
+    Route::middleware('can:manage-products')
+        ->prefix('reports')
+        ->name('reports.')
+        ->controller(ReportController::class)
+        ->group(function () {
+
+            Route::redirect('/', '/reports/sales');
+
+            // Reporte de ventas
+            Route::get('/sales', 'sales')
+                ->name('sales');
+
+            Route::get('/sales/export', 'salesExport')
+                ->name('sales.export');
+
+            // Reporte de inventario
+            Route::get('/inventory', 'inventory')
+                ->name('inventory');
+
+            Route::get('/inventory/export', 'inventoryExport')
+                ->name('inventory.export');
+
+            // Reporte de movimientos
+            Route::get('/movements', 'movements')
+                ->name('movements');
+
+            Route::get('/movements/export', 'movementsExport')
+                ->name('movements.export');
+        });
 
 });
 

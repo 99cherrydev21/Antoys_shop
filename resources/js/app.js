@@ -43,3 +43,4 @@ Alpine.data('autoDismissAlert', (delay = 3000) => ({
     }
 }));
 Alpine.start();
+import './reporte-venta.js';

@@ -36,11 +36,13 @@
 
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                         <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        <a href="{{ route('reports.inventory') }}" >
                             Reportes de inventario
                         </h4>
                         <p class="mt-2 text-gray-600 dark:text-gray-300">
                             Consultar y preparar reportes de existencias.
                         </p>
+                    </a>
                     </div>
                 @endif
 
@@ -60,11 +62,14 @@
                 @if (Auth::user()->role?->name === 'Jefe')
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                         <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        <a href="{{ route('reports.sales') }}" >
+
                             Reportes de ventas
                         </h4>
                         <p class="mt-2 text-gray-600 dark:text-gray-300">
                             Consultar resultados diarios, mensuales y anuales.
                         </p>
+                    </a>
                     </div>
 
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">

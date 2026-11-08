@@ -7,15 +7,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InventoryMovement extends Model
 {
-    protected $fillable = [
-        'product_id',
-        'user_id',
-        'type',
-        'quantity',
-        'stock_before',
-        'stock_after',
-        'reason',
-    ];
+protected $fillable = [
+    'product_id',
+    'user_id',
+    'type',
+    'quantity',
+    'stock_before',
+    'stock_after',
+    'reason',
+    'reference_type',
+    'reference_id',
+];
 
     protected function casts(): array
     {
