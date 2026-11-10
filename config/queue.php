@@ -125,5 +125,11 @@ return [
         'database' => env('DB_CONNECTION', 'sqlite'),
         'table' => 'failed_jobs',
     ],
-
+    
+    'maintenance' => [
+        'mysql_dump_path' => env(
+            'MYSQL_DUMP_PATH',
+            'C:\\laragon\\bin\\mysql\\mysql-8.0.30-winx64\\bin\\mysqldump.exe'
+        ),
+    ],
 ];

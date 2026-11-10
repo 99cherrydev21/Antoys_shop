@@ -12,11 +12,7 @@
                         Historial de ventas
                     </h1>
 
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                        {{ $isBoss
-                            ? 'Consulta y administra las ventas del sistema.'
-                            : 'Consulta las ventas que has realizado.' }}
-                    </p>
+
                 </div>
 
                 <a href="{{ route('sales.index') }}"
@@ -55,11 +51,6 @@
 
                     {{-- BUSCADOR --}}
                     <div class="min-w-0 flex-1">
-
-                        <label for="search"
-                               class="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-gray-300">
-                            Buscar venta por folio
-                        </label>
 
                         <div class="relative">
 
@@ -110,9 +101,7 @@
                             </button>
                         </div>
 
-                        <p class="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
-                            Puedes escribir el folio completo o solamente sus últimos números.
-                        </p>
+
                     </div>
 
                     {{-- CALENDARIO COMPACTO --}}
@@ -453,7 +442,7 @@
 
                                 </div>
 
-                               
+
                             </article>
                         </div>
 

@@ -22,6 +22,10 @@ class RoleSeeder extends Seeder
                 'name' => 'vendedor',
                 'description' => 'Registro y consulta de ventas',
             ],
+            [
+                'name' => 'tecnico',
+                'description' => 'Respaldos, mantenimiento y restablecimiento autorizado del sistema',
+            ],
         ];
 
         foreach ($roles as $role) {

@@ -49,7 +49,7 @@
             <!-- Logo -->
             <div>
                 <a href="/" aria-label="Ir al inicio">
-                    <x-application-logo class="w-20 h-20 fill-current text-gray-500 dark:text-gray-400" />
+                      <x-cat-logo size="lg" />
                 </a>
             </div>
 

@@ -242,10 +242,54 @@ Route::middleware('auth')->group(function () {
             Route::get('/movements/export', 'movementsExport')
                 ->name('movements.export');
         });
+// ========================================
+// MANTENIMIENTO DEL SISTEMA
+// ========================================
 
+Route::prefix('maintenance')
+    ->name('maintenance.')
+    ->controller(\App\Http\Controllers\MaintenanceController::class)
+    ->group(function () {
+
+        // Rutas accesibles para quienes pueden gestionar mantenimiento (Jefe o Técnico)
+        Route::middleware('can:manage-maintenance')->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/history', 'history')->name('history');
+        });
+
+        // Crear solicitud: solo el jefe
+        Route::post('/', 'store')
+            ->name('store')
+            ->middleware('can:approve-maintenance'); // O el permiso que aplique para crear
+
+        // Autorizar: solo el jefe
+        Route::patch('/{maintenanceRequest}/approve', 'approve')
+            ->name('approve')
+            ->middleware('can:approve-maintenance');
+
+        // Ejecutar respaldos / mantenimiento: solo técnicos (usando tu gate execute-maintenance)
+        Route::middleware('can:execute-maintenance')->group(function () {
+            Route::post('/{maintenanceRequest}/backup', 'generateBackup')
+                ->name('backup.generate');
+
+            Route::get('/{maintenanceRequest}/backup/download', 'downloadBackup')
+                ->name('backup.download');
+
+            Route::post('/{maintenanceRequest}/backup/confirm', 'confirmBackup')
+                ->name('backup.confirm');
+        });
+                    // Solicitar restablecimiento: solo jefe
+            Route::post('/', 'store')->name('store');
+
+            // Autorizar restablecimiento: solo jefe
+            Route::patch('/{maintenanceRequest}/approve', 'approve')
+                ->name('approve');
+
+            // Ejecutar restablecimiento: técnico asignado
+            Route::post('/{maintenanceRequest}/execute', 'execute')
+                ->name('execute');
+                });
 });
-
-
 /*
 |--------------------------------------------------------------------------
 | Autenticación

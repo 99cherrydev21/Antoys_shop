@@ -9,24 +9,19 @@
 
                 <!-- Enlace de inicio con el gatito -->
                 <div class="flex items-center gap-1.5 shrink-0">
-                    <a
-                        href="{{ route('dashboard') }}"
-                        class="p-1 rounded-md hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition flex items-center"
-                        title="Inicio"
-                        aria-label="Ir al inicio"
-                    >
-                        <x-application-logo class="block h-8 w-auto" />
-                    </a>
+                    <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
+    <x-cat-logo size="sm" decorative />
+</a>
                 </div>
-
-                <!-- Saludo y rol -->
-                <span
-                    class="text-base sm:text-xl font-semibold break-words"
-                    style="background: linear-gradient(to right, #b9a78b, #607491); -webkit-background-clip: text; color: transparent;"
-                >
-                    Hola, {{ Auth::user()->name . ' - ' . (Auth::user()->role?->name ?? 'Sin rol asignado') }}
-                </span>
-
+<span
+    class="text-base sm:text-xl font-semibold break-words
+           bg-gradient-to-r from-indigo-400 via-blue-300 to-amber-300
+           dark:from-indigo-300 dark:via-blue-200 dark:to-amber-200
+           bg-clip-text text-transparent
+           drop-shadow-[0_1px_2px_rgba(99,102,241,0.4)]"
+>
+    {{ Auth::user()->name . ' - ' . (Auth::user()->role?->name ?? 'Sin rol asignado') }}
+</span>
             </div>
 
             <!-- CONTROLES DERECHA -->

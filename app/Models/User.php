@@ -36,16 +36,24 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
-public function isJefe(): bool
-{
-    return mb_strtolower((string) $this->role?->name) === 'jefe';
-}
-public function isInventarista(): bool
-{
-    return mb_strtolower((string) $this->role?->name) === 'inventarista';
-}
-public function sales(): \Illuminate\Database\Eloquent\Relations\HasMany
-{
-    return $this->hasMany(\App\Models\Sale::class);
-}
+    public function isJefe(): bool
+    {
+        return mb_strtolower((string) $this->role?->name) === 'jefe';
+    }
+
+    public function isInventarista(): bool
+    {
+        return mb_strtolower((string) $this->role?->name) === 'inventarista';
+    }
+
+    public function sales(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\Sale::class);
+    }
+
+    public function isTecnico(): bool
+    {
+        return mb_strtolower((string) $this->role?->name) === 'tecnico';
+    }
+
 }
